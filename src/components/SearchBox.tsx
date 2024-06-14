@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./searchBox.css";
 import { getBooks } from "../apis/booksAPI";
 import { Book } from "../types/book";
@@ -8,11 +8,11 @@ const SearchBox = () => {
   const [searchValue, setSearchValue] = useState<string>("");
   const [bookList, setBookList] = useState<Book[]>([]);
 
-  console.log(bookList);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const changeEvent = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
-      await getBooks(e.target.value)
+  const changeEvent = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (inputRef.current?.value) {
+      getBooks(inputRef.current?.value)
         .then((data) => {
           console.log(data);
           setBookList([...data]);
@@ -21,17 +21,17 @@ const SearchBox = () => {
           console.log(err);
         });
     } else {
-      await setBookList([]);
+      setBookList([]);
     }
   };
-  const debouncedSearch = debounce(changeEvent, 1000);
+  const debouncedSearch = debounce(changeEvent, 300);
+
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(e.target.value);
-    debouncedSearch(e)
-  }
+    debouncedSearch(e);
+  };
 
   const itemOnClick = (newValue: string) => {
-    setSearchValue(newValue);
+    if (inputRef.current) inputRef.current.value = newValue
   };
 
   return (
@@ -42,8 +42,10 @@ const SearchBox = () => {
           type="text"
           id="book"
           name="book"
-          value={searchValue}
-          onChange={(e) => handleOnChange(e)}
+          ref = {inputRef}
+          onChange={(e) => {
+            handleOnChange(e)
+          }}
           aria-label="Book Search"
         />
         {bookList.length > 0 && (

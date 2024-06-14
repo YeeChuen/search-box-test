@@ -6,7 +6,6 @@ import SearchBox from './components/SearchBox';
 function App() {
   return (
     <div className="App">
-      Search Box Component:
       <SearchBox />
     </div>
   );
