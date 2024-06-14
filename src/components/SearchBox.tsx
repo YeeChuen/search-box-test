@@ -5,16 +5,18 @@ import { Book } from "../types/book";
 import { debounce } from "../utils/utils";
 
 const SearchBox = () => {
-  const [searchValue, setSearchValue] = useState<string>("");
+  // const [searchValue, setSearchValue] = useState<string>("");
   const [bookList, setBookList] = useState<Book[]>([]);
+  const [openMenu, setOpenMenu] = useState<boolean>(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
   const changeEvent = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOpenMenu(true);
     if (inputRef.current?.value) {
       getBooks(inputRef.current?.value)
         .then((data) => {
-          console.log(data);
+          // console.log(data);
           setBookList([...data]);
         })
         .catch((err) => {
@@ -31,24 +33,27 @@ const SearchBox = () => {
   };
 
   const itemOnClick = (newValue: string) => {
-    if (inputRef.current) inputRef.current.value = newValue
+    setOpenMenu(false);
+    if (inputRef.current) inputRef.current.value = newValue;
   };
 
   return (
-    <div className="search--container" data-testid="search--container">
+    <div className="search--container" data-testid="search--container"
+    >
       <form className="search--container-form">
         <input
           className="search--form-input"
           type="text"
           id="book"
           name="book"
-          ref = {inputRef}
+          ref={inputRef}
           onChange={(e) => {
-            handleOnChange(e)
+            handleOnChange(e);
           }}
+          onClick={() => setOpenMenu(true)}
           aria-label="Book Search"
         />
-        {bookList.length > 0 && (
+        {openMenu && bookList.length > 0 && (
           <div className="search--dropdown-container">
             {bookList.map((e, i) => {
               return (
