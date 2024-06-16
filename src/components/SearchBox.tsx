@@ -1,23 +1,31 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./searchBox.css";
 import { getBooks } from "../apis/booksAPI";
 import { Book } from "../types/book";
-import { debounce } from "../utils/utils";
+import { debounce, throttle } from "../utils/utils";
+import { useDebounce, useThrottle } from "../customHooks/customHooks";
 
 const SearchBox = () => {
-  // const [searchValue, setSearchValue] = useState<string>("");
+  const [searchValue, setSearchValue] = useState<string>("");
   const [bookList, setBookList] = useState<Book[]>([]);
   const [openMenu, setOpenMenu] = useState<boolean>(false);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  // useDebounce
+  const debounceValue = useDebounce<string>(searchValue, 1000);
+  // useThrottle
+  const throttleValue = useThrottle<string>(searchValue, 1000);
 
-  const changeEvent = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fetchBooks = (inputValue: string | undefined) => {
+    console.log("fetchbook", inputValue);
     setOpenMenu(true);
-    if (inputRef.current?.value) {
-      getBooks(inputRef.current?.value)
+    if (inputValue) {
+      getBooks(inputValue)
         .then((data) => {
-          // console.log(data);
-          setBookList([...data]);
+          if (data) {
+            setBookList([...data]);
+          } else {
+            setBookList([]);
+          }
         })
         .catch((err) => {
           console.log(err);
@@ -26,19 +34,26 @@ const SearchBox = () => {
       setBookList([]);
     }
   };
-  const debouncedSearch = debounce(changeEvent, 300);
+
+  useEffect(() => {
+    fetchBooks(debounceValue);
+  }, [debounceValue]);
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    debouncedSearch(e);
+    setOpenMenu(true);
+    setSearchValue(e.target.value);
   };
 
   const itemOnClick = (newValue: string) => {
     setOpenMenu(false);
-    if (inputRef.current) inputRef.current.value = newValue;
+    setSearchValue(newValue);
   };
 
   return (
-    <div className="search--container" data-testid="search--container"
+    <div
+      className="search--container"
+      data-testid="search--container"
+      // style={{backgroundColor: "red"}}
     >
       <form className="search--container-form">
         <input
@@ -46,7 +61,6 @@ const SearchBox = () => {
           type="text"
           id="book"
           name="book"
-          ref={inputRef}
           onChange={(e) => {
             handleOnChange(e);
           }}
@@ -54,7 +68,8 @@ const SearchBox = () => {
           aria-label="Book Search"
         />
         {openMenu && bookList.length > 0 && (
-          <div className="search--dropdown-container">
+          <div className="search--dropdown-container" 
+          aria-label="Book Menu">
             {bookList.map((e, i) => {
               return (
                 <div
